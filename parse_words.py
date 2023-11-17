@@ -9,7 +9,7 @@ import nltk
 
 # For some reason, I put the data in a different folder. Used the Electronics
 # reviews.
-filename = '../Electronics.json.gz'
+filename = './data/Electronics.json.gz'
 
 
 # Read the data into a pandas data frame with parse and getDF (code from
