@@ -20,7 +20,7 @@ def parse(path):
     for line in g:
         count += 1
         # Messy break as to not deal with all the data right now.
-        if count > 100000:
+        if count > 1000:
             break
         yield json.loads(line)
 
@@ -59,8 +59,7 @@ def count_top_words(dataset, top_ten=10):
     # Identify parts of speech for each word that relate to adjectives (JJ, JJR, JJS) or adverbs (RB).
     meaningful_words = [word for word, pos in tagged_words
                         if pos.startswith('JJ') or pos.startswith('JJR')
-                        or pos.startswith('JJR') or pos.startswith('JJS')
-                        or pos.startswith('RB')]
+                        or pos.startswith('JJS') or pos.startswith('RB')]
 
     # Counts the frequency of each word in the new array.
     freq_dist = nltk.probability.FreqDist(meaningful_words)
