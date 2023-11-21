@@ -105,13 +105,13 @@ class BertSentiment:
 
 
     # Test the previously trained and loaded model
-    def test(self, test_in, test_tgt, print_cm=False, batch_size=8):
+    def test(self, x_test, y_test, print_cm=False, batch_size=8):
 
         # Adjust the labels to be zero-indexed
-        test_tgt = [label - 1 for label in test_tgt]
+        y_test = [label - 1 for label in y_test]
 
         # Encode the testing data
-        test_dataset = self.encode_examples(test_in, test_tgt)
+        test_dataset = self.encode_examples(x_test, y_test)
 
         test_dataset_batched = test_dataset.batch(batch_size)
 
@@ -120,8 +120,8 @@ class BertSentiment:
         loss, accuracy = self.model.evaluate(test_dataset_batched)
 
         results = {
-            'final_loss': loss,
-            'final_accuracy': accuracy,
+            'testing_loss': loss,
+            'testing_accuracy': accuracy,
         }
 
         # Add confusion matrix
@@ -133,7 +133,7 @@ class BertSentiment:
             predicted_labels = np.argmax(raw_predictions['logits'], axis=1)
 
             # Create confusion matrix
-            cm = self.confusion_matrix(predicted_labels, test_tgt)
+            cm = self.confusion_matrix(predicted_labels, y_test)
 
             # Add confusion matrix to results
             results['confusion_matrix'] = cm.tolist()
@@ -142,15 +142,15 @@ class BertSentiment:
 
 
     # Train the model, then test
-    def train_and_test(self, train_in, test_in, train_tgt, test_tgt, print_cm=False, epochs=4, batch_size=8):
+    def train_and_test(self, x_train, x_test, y_train, y_test, print_cm=False, epochs=4, batch_size=8):
 
         # Adjust the labels to be zero-indexed
-        train_tgt = [label - 1 for label in train_tgt]
-        test_tgt = [label - 1 for label in test_tgt]
+        y_train = [label - 1 for label in y_train]
+        y_test = [label - 1 for label in y_test]
 
         # Encode the training and testing data
-        train_dataset = self.encode_examples(train_in, train_tgt)
-        test_dataset = self.encode_examples(test_in, test_tgt)
+        train_dataset = self.encode_examples(x_train, y_train)
+        test_dataset = self.encode_examples(x_test, y_test)
 
         # Compile the model
         self.compile_model(learning_rate=2e-5)
@@ -173,8 +173,8 @@ class BertSentiment:
             'training_accuracy': history.history['accuracy'],
             'validation_loss': history.history['val_loss'],
             'validation_accuracy': history.history['val_accuracy'],
-            'final_loss': loss,
-            'final_accuracy': accuracy
+            'testing_loss': loss,
+            'testing_accuracy': accuracy
         }
 
         # Confusion matrix
@@ -186,7 +186,7 @@ class BertSentiment:
             predicted_labels = np.argmax(raw_predictions.logits, axis=1)
 
             # Create confusion matrix
-            cm = self.confusion_matrix(predicted_labels, test_tgt)
+            cm = self.confusion_matrix(predicted_labels, y_test)
 
             # Update results with confusion matrix data
             results['confusion_matrix'] = cm.tolist()

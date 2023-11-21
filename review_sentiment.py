@@ -94,9 +94,9 @@ def load_data(filename, max_reviews, test_size, seed):
                 print(f"Error decoding JSON on line {i+1}")
 
     # Split the data into training and testing sets
-    train_in, test_in, train_tgt, test_tgt = train_test_split(reviews, ratings, test_size=test_size, random_state=seed, shuffle=True)
+    x_train, x_test, y_train, y_test = train_test_split(reviews, ratings, test_size=test_size, random_state=seed, shuffle=True)
 
-    return train_in, test_in, train_tgt, test_tgt
+    return x_train, x_test, y_train, y_test
 
 
 # Load the same number of reviews from each rating
@@ -135,9 +135,9 @@ def load_balanced_data(filename, max_reviews, test_size, seed):
     reviews, ratings = zip(*[item for sublist in reviews_per_rating.values() for item in sublist])
 
     # Split the data into training and testing sets
-    train_in, test_in, train_tgt, test_tgt = train_test_split(reviews, ratings, test_size=test_size, random_state=seed, shuffle=True)
+    x_train, x_test, y_train, y_test = train_test_split(reviews, ratings, test_size=test_size, random_state=seed, shuffle=True)
 
-    return train_in, test_in, train_tgt, test_tgt
+    return x_train, x_test, y_train, y_test
 
 
 def main():
@@ -168,11 +168,11 @@ def main():
         if balanced_load:
             if verbose:
                 print("using load_balanced_data\n")
-            train_in, test_in, train_tgt, test_tgt = load_balanced_data(data_file_path, max_reviews, test_size, seed)
+            x_train, x_test, y_train, y_test = load_balanced_data(data_file_path, max_reviews, test_size, seed)
         else:
             if verbose:
                 print("using load_data\n")
-            train_in, test_in, train_tgt, test_tgt = load_data(data_file_path, max_reviews, test_size, seed)
+            x_train, x_test, y_train, y_test = load_data(data_file_path, max_reviews, test_size, seed)
 
     if verbose:
         print(f"data_file_path:\t\t\t{data_file_path}")
@@ -188,24 +188,24 @@ def main():
         print(f"epochs:\t\t\t\t{epochs}")
         print(f"seed:\t\t\t\t{seed}\n")
 
-        print(f"Number of training inputs:\t{len(train_in)}")
-        print(f"Number of training targets:\t{len(train_tgt)}")
-        print(f"Number of testing inputs:\t{len(test_in)}")
-        print(f"Number of testing targets:\t{len(test_tgt)}\n")
+        print(f"Number of training inputs:\t{len(x_train)}")
+        print(f"Number of training targets:\t{len(y_train)}")
+        print(f"Number of testing inputs:\t{len(x_test)}")
+        print(f"Number of testing targets:\t{len(y_test)}\n")
 
-        print(f"First training input:\t{train_in[0]}")
-        print(f"First training target:\t{train_tgt[0]}")
-        print(f"First testing input:\t{test_in[0]}")
-        print(f"First testing target:\t{test_tgt[0]}")
+        print(f"First training input:\t{x_train[0]}")
+        print(f"First training target:\t{y_train[0]}")
+        print(f"First testing input:\t{x_test[0]}")
+        print(f"First testing target:\t{y_test[0]}")
 
     # Run the selected model
     # MLP
     if choice == '1':
-        results = nn_model.train_and_test(train_in, test_in, train_tgt, test_tgt)
+        results = nn_model.train_and_test(x_train, x_test, y_train, y_test)
 
     # Bayesian
     elif choice == '2':
-        results = bayesian_model.train_and_test(train_in, test_in, train_tgt, test_tgt)
+        results = bayesian_model.train_and_test(x_train, x_test, y_train, y_test)
 
     # BERT
     # I should probably move much of this to the module file...
@@ -213,10 +213,30 @@ def main():
 
         # Instantiate BERT model
         classifier = bert_model.BertSentiment(num_labels=5)
-        choice = input("\n1. Test model\n2. Train model\n>> ")
+        choice = input("\n1. Train model\n2. Test model\n>> ")
+
+        # Train BERT
+        if choice == '1':
+
+            if out_model_path is None:
+                print("\nWARNING: No file path provided - model will not be saved.")
+
+            # Train and test the model
+            results = classifier.train_and_test(x_train, x_test, y_train, y_test, print_cm, epochs, batch_size=8)
+
+            # Save trained model
+            if out_model_path is not None:
+                try:
+                    classifier.save_model(out_model_path)
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            if verbose:
+                print("Results:")
+                print(results)
 
         # Test BERT
-        if choice == '1':
+        elif choice == '2':
 
             # No point in plotting a test
             plot = False
@@ -233,30 +253,10 @@ def main():
             print("Model compiled successfully.")
 
             # Test the model
-            results = classifier.test(test_in, test_tgt, print_cm, batch_size=8)
+            results = classifier.test(x_test, y_test, print_cm, batch_size=8)
             # Print results
-            print(f"Loss:\t{results['test_loss']}")
-            print(f"Accuracy:\t{results['test_accuracy']}")
-            if verbose:
-                print("Results:")
-                print(results)
-
-        # Train BERT
-        elif choice == '2':
-
-            if out_model_path is None:
-                print("\nWARNING: No file path provided - model will not be saved.")
-
-            # Train and test the model
-            results = classifier.train_and_test(train_in, test_in, train_tgt, test_tgt, print_cm, epochs, batch_size=8)
-
-            # Save trained model
-            if out_model_path is not None:
-                try:
-                    classifier.save_model(out_model_path)
-                except Exception as e:
-                    print(f"Error: {e}")
-
+            #print(f"Loss:\t\t{results['testing_loss']}")
+            #print(f"Accuracy:\t{results['testing_accuracy']}")
             if verbose:
                 print("Results:")
                 print(results)
@@ -274,10 +274,12 @@ def main():
         plot_module.plot_results(results)
 
     # Print results
-    if 'final_loss' in results:
-        print(f"Final testing loss:\t\t{results['final_loss']}")
-    if 'final_accuracy' in results:
-        print(f"Fainal testing accuracy:\t{results['final_accuracy']}")
+    # TODO this needs to be changed if your models return a list of values
+    # I'm using this to store a single value for the final result
+    if 'testing_loss' in results:
+        print(f"\nFinal testing loss:\t{results['testing_loss']}")
+    if 'testing_accuracy' in results:
+        print(f"Final testing accuracy:\t{results['testing_accuracy']}")
 
     # Print confusion matrix
     if print_cm:
