@@ -157,10 +157,10 @@ def main():
     in_model_path = args.in_model
     out_model_path = args.out_model
 
-    #results = {}
+    results = {}
 
     # Main menu
-    choice = input("Select model:\n1. NN\n2. Bayesian\n3. BERT\n4. Plot test\n>> ")
+    choice = input("Select model:\n1. Neural network\n2. Bayesian model\n3. BERT\n4. Plot test\n>> ")
 
     # Only load the data if the choice is valid (to save on time/computation)
     if choice in ['1', '2', '3', '4']:
@@ -245,21 +245,27 @@ def main():
             try:
                 classifier.load_model(in_model_path)
                 print("\nModel loaded successfully.\n")
+
+                # Not sure why it needed this
+                classifier.compile_model(learning_rate=2e-5)
+                print("Model compiled successfully.")
+
+                # Test the model
+                results = classifier.test(x_test, y_test, print_cm, batch_size=8)
+                # Print results
+                #print(f"Loss:\t\t{results['testing_loss']}")
+                #print(f"Accuracy:\t{results['testing_accuracy']}")
+                if verbose:
+                    print("Results:")
+                    print(results)
+
+
             except Exception as e:
                 print(f"Error: {e}")
 
-            # Not sure why it needed this
-            classifier.compile_model(learning_rate=2e-5)
-            print("Model compiled successfully.")
-
-            # Test the model
-            results = classifier.test(x_test, y_test, print_cm, batch_size=8)
-            # Print results
-            #print(f"Loss:\t\t{results['testing_loss']}")
-            #print(f"Accuracy:\t{results['testing_accuracy']}")
-            if verbose:
-                print("Results:")
-                print(results)
+        else:
+            print("Invalid choice.")
+            return
 
     # Just for testing, remove before submission
     elif choice == '4':
@@ -280,6 +286,8 @@ def main():
         print(f"\nFinal testing loss:\t{results['testing_loss']}")
     if 'testing_accuracy' in results:
         print(f"Final testing accuracy:\t{results['testing_accuracy']}")
+    if 'within_one' in results:
+        print(f"Accuracy within 1 star:\t{results['within_one']}")
 
     # Print confusion matrix
     if print_cm:

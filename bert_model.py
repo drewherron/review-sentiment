@@ -106,40 +106,50 @@ class BertSentiment:
 
     # Test the previously trained and loaded model
     def test(self, x_test, y_test, print_cm=False, batch_size=8):
-
         # Adjust the labels to be zero-indexed
         y_test = [label - 1 for label in y_test]
 
         # Encode the testing data
         test_dataset = self.encode_examples(x_test, y_test)
-
         test_dataset_batched = test_dataset.batch(batch_size)
 
         # Evaluate the model
         print("\nTesting model...")
         loss, accuracy = self.model.evaluate(test_dataset_batched)
 
+        # Get predictions
+        print("\nGetting predictions...")
+        raw_predictions = self.model.predict(test_dataset_batched)
+        predicted_labels = np.argmax(raw_predictions['logits'], axis=1)
+
+        # Calculate fuzzy accuracy (within one)
+        within_one = self.fuzzy_accuracy(predicted_labels, y_test)
+        print(f"Adjusted Accuracy (Within One): {within_one}")
+
+        # Results
         results = {
             'testing_loss': loss,
             'testing_accuracy': accuracy,
+            'within_one': within_one
         }
 
         # Add confusion matrix
         if print_cm:
-            # Get predictions
-            print("\nGetting predictions for confusion matrix...")
-            raw_predictions = self.model.predict(test_dataset_batched)
-            #print("Raw predictions:", raw_predictions)
-            predicted_labels = np.argmax(raw_predictions['logits'], axis=1)
-
-            # Create confusion matrix
+            print("\nGenerating confusion matrix...")
             cm = self.confusion_matrix(predicted_labels, y_test)
-
-            # Add confusion matrix to results
             results['confusion_matrix'] = cm.tolist()
 
         return results
 
+
+    # Get accuracy within one star difference
+    def fuzzy_accuracy(self, predictions, actuals):
+        correct = 0
+        for pred, actual in zip(predictions, actuals):
+            # Prediction is within one star of actual rating
+            if abs(pred - actual) <= 1:
+                correct += 1
+        return correct / len(predictions)
 
     # Train the model, then test
     def train_and_test(self, x_train, x_test, y_train, y_test, print_cm=False, epochs=4, batch_size=8):
