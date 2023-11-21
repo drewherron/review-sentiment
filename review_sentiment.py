@@ -1,7 +1,5 @@
 import json
-import random
 import argparse
-from sklearn.model_selection import train_test_split
 import os
 # Filter out Tensorflow messages (set to 0 to see all)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -9,7 +7,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 #import nn_model
 #import bayesian_model
 import bert_model
-import plot_module
+
+import loading_module as ld
+import plotting_module as pl
 
 
 # These are defaults, overridden by command line arguments
@@ -76,70 +76,6 @@ def get_args():
     return parser.parse_args()
 
 
-# Load data
-def load_data(filename, max_reviews, test_size, seed):
-
-    reviews = []
-    ratings = []
-
-    with open(filename, 'r', encoding='utf-8') as file:
-        for i, line in enumerate(file):
-            if i >= max_reviews:
-                break
-            try:
-                review = json.loads(line)
-                reviews.append(review.get('reviewText', ''))
-                ratings.append(review.get('overall', 0))
-            except json.JSONDecodeError:
-                print(f"Error decoding JSON on line {i+1}")
-
-    # Split the data into training and testing sets
-    x_train, x_test, y_train, y_test = train_test_split(reviews, ratings, test_size=test_size, random_state=seed, shuffle=True)
-
-    return x_train, x_test, y_train, y_test
-
-
-# Load the same number of reviews from each rating
-def load_balanced_data(filename, max_reviews, test_size, seed):
-
-    reviews_per_rating = {1.0: [], 2.0: [], 3.0: [], 4.0: [], 5.0: []}
-    all_reviews = []
-
-    # Read in all reviews
-    with open(filename, 'r', encoding='utf-8') as file:
-        for line in file:
-            try:
-                review = json.loads(line)
-                all_reviews.append((review.get('reviewText', ''), review.get('overall', 0)))
-            except json.JSONDecodeError:
-                print(f"Error decoding JSON")
-
-    # Shuffle all reviews
-    random.seed(seed)
-    random.shuffle(all_reviews)
-
-    # Split reviews into 5 rating categories
-    max_reviews_per_rating = max_reviews // 5
-    for review, rating in all_reviews:
-        if rating in reviews_per_rating and len(reviews_per_rating[rating]) < max_reviews_per_rating:
-            reviews_per_rating[rating].append((review, rating))
-
-    # Find the minimum number of reviews in any rating category
-    min_reviews = min(len(reviews) for reviews in reviews_per_rating.values())
-
-    # Limit each category to the size of the smallest category
-    for rating in reviews_per_rating:
-        reviews_per_rating[rating] = reviews_per_rating[rating][:min_reviews]
-
-    # Flatten the reviews and ratings
-    reviews, ratings = zip(*[item for sublist in reviews_per_rating.values() for item in sublist])
-
-    # Split the data into training and testing sets
-    x_train, x_test, y_train, y_test = train_test_split(reviews, ratings, test_size=test_size, random_state=seed, shuffle=True)
-
-    return x_train, x_test, y_train, y_test
-
-
 def main():
 
     # Command-line arguments
@@ -162,17 +98,18 @@ def main():
     # Main menu
     choice = input("Select model:\n1. Neural network\n2. Bayesian model\n3. BERT\n4. Plot test\n>> ")
 
-    # Only load the data if the choice is valid (to save on time/computation)
+    # Load data
+    # Only if the choice is valid (to save on time/computation)
     if choice in ['1', '2', '3', '4']:
         print("\nLoading data...")
         if balanced_load:
             if verbose:
                 print("using load_balanced_data\n")
-            x_train, x_test, y_train, y_test = load_balanced_data(data_file_path, max_reviews, test_size, seed)
+            x_train, x_test, y_train, y_test = ld.load_balanced_data(data_file_path, max_reviews, test_size, seed)
         else:
             if verbose:
                 print("using load_data\n")
-            x_train, x_test, y_train, y_test = load_data(data_file_path, max_reviews, test_size, seed)
+            x_train, x_test, y_train, y_test = ld.load_data(data_file_path, max_reviews, test_size, seed)
 
     if verbose:
         print(f"data_file_path:\t\t\t{data_file_path}")
@@ -269,7 +206,7 @@ def main():
 
     # Just for testing, remove before submission
     elif choice == '4':
-        results = plot_module.dummy_data
+        results = pl.dummy_data
 
     else:
         print("Invalid choice.")
@@ -277,7 +214,7 @@ def main():
 
     # Plot results
     if plot:
-        plot_module.plot_results(results)
+        pl.plot_results(results)
 
     # Print results
     # TODO this needs to be changed if your models return a list of values
