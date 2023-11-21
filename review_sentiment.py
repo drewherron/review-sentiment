@@ -14,12 +14,13 @@ import plotting_module as pl
 
 # These are defaults, overridden by command line arguments
 IN_FILE_PATH = "./data/Appliances.json"
-OUT_MODEL_PATH = None
-IN_MODEL_PATH = None
-MAX_REVIEWS = 200000   # Max number of reviews to load from data
-TEST_SIZE = 0.2        # Percentage of data to reserve for testing
-EPOCHS = 4             # Number of epochs to run in training
-SEED = None            # Seed the randomness of the initial data shuffles
+IN_FILE_PATH_TEST = None # Dataset to test (but not train) on
+OUT_MODEL_PATH = None    # File path to save model
+IN_MODEL_PATH = None     # File path to load model
+MAX_REVIEWS = 200000     # Max number of reviews to load from data
+TEST_SIZE = 0.2          # Percentage of data to reserve for testing
+EPOCHS = 4               # Number of epochs to run in training
+SEED = None              # Seed the randomness of the initial data shuffles
 
 
 # Allow command line arguments

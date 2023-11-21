@@ -67,6 +67,7 @@ def load_balanced_data(filename, max_reviews, test_size, seed):
     return x_train, x_test, y_train, y_test
 
 
+# Use separate datasets for training and testing
 def split_balanced_data(train_filename, test_filename, max_reviews, test_size, seed):
     def read_and_balance_data(filename, max_reviews_per_rating):
         reviews_per_rating = {1.0: [], 2.0: [], 3.0: [], 4.0: [], 5.0: []}
@@ -104,8 +105,5 @@ def split_balanced_data(train_filename, test_filename, max_reviews, test_size, s
     max_reviews_per_rating = max_reviews // 5
     x_train, y_train = read_and_balance_data(train_filename, max_reviews_per_rating)
     x_test, y_test = read_and_balance_data(test_filename, max_reviews_per_rating)
-
-    # Might just be for shuffling...
-    x_test, y_test = train_test_split(x_test, y_test, test_size=test_size, random_state=seed, shuffle=True)
 
     return x_train, x_test, y_train, y_test
