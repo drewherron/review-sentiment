@@ -1,0 +1,62 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amsthm,amssymb,hyperref}
+\usepackage{array, graphicx}
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\setlistdepth{9}
+\usepackage{setspace}
+\setstretch{1.25}
+\usepackage{times}
+%\usepackage{11785_project}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{titling}
+\setlength{\droptitle}{-8ex}
+\pretitle{\begin{flushleft}\Large\bfseries}
+\posttitle{\par\end{flushleft}}
+\preauthor{\begin{flushleft}\normal}
+\postauthor{\end{flushleft}}
+%\predate{\begin{center}}
+%\postdate{\end{center}}
+\date{\vspace{-5ex}}
+\title{Sentiment Analysis of Amazon Reviews}
+
+
+\author{
+Connor Baron-Williams \\
+\texttt{jcwill@pdx.edu} \\
+\AND
+Drew Herron \\
+\texttt{dherron@pdx.edu} \\
+\AND
+Nate Ruble \\
+\texttt{nruble@pdx.edu}
+}
+
+\begin{document}
+
+
+\maketitle
+
+\subsection*{Introduction}
+For this project, we plan to use machine learning to train models for use in natural language sentiment analysis. The models will read the text of product reviews from Amazon.com, and attempt to predict the rating that was given by the review author.
+
+\subsection*{Models}
+Our program will load the review data, and then provide an option for the user to choose between three machine learning models:
+\begin{enumerate}
+\itemsep0em
+\item A neural network (MLP)
+\item A Bayesian model
+\item BERT
+\end{enumerate}
+We chose these models for the experience of using text in and applying NLP methods/tools to models we've already used in this class, in addition to testing out NLP transfer learning with BERT.
+
+\subsection*{Data}
+The datasets for our project can be found at \href{https://cseweb.ucsd.edu/~jmcauley/datasets/amazon_v2/}{https://cseweb.ucsd.edu/~jmcauley/datasets/amazon\_v2/}. Over 233 million Amazon reviews are available to use, split into various subsets. Our plan is to use the 600k reviews for ``Appliances'' as the standard/base dataset for training, or at least a selection from this set, depending on the model.
+
+\subsection*{Project}
+The primary experiment we'll be running is a comparison of the performance between the three models. We'll compare things like overall accuracy, error/loss, and attributes like training time and data requirements. We will also be making comparisons within each model, and seeing which changes make for better or worse results. We will experiment with changes in, among other things: number of reviews trained on, proportion of reviews reserved for training, number of epochs, learning rate, and any other relevant hyperparameters. We also plan to experiment with training on one dataset, and then testing on another category to see how accuracy is affected by variability in the review vocabulary. We could also try feeding other text (i.e., not Amazon reviews) to test how well the sentiment analysis generalizes to other English content.
+
+\end{document}
