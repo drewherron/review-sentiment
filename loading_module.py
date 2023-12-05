@@ -20,10 +20,13 @@ def load_data(filename, max_reviews, test_size, seed):
             except json.JSONDecodeError:
                 print(f"Error decoding JSON on line {i+1}")
 
-    # Split the data into training and testing sets
-    x_train, x_test, y_train, y_test = train_test_split(reviews, ratings, test_size=test_size, random_state=seed, shuffle=True)
-
-    return x_train, x_test, y_train, y_test
+    if test_size == 1.0:
+        # Use all data for testing, none for training
+        return [], reviews, [], ratings
+    else:
+        # Split the data into training and testing sets
+        x_train, x_test, y_train, y_test = train_test_split(reviews, ratings, test_size=test_size, random_state=seed, shuffle=True)
+        return x_train, x_test, y_train, y_test
 
 
 # Load the same number of reviews from each rating
@@ -61,8 +64,13 @@ def load_balanced_data(filename, max_reviews, test_size, seed):
     # Flatten the reviews and ratings
     reviews, ratings = zip(*[item for sublist in reviews_per_rating.values() for item in sublist])
 
-    # Split the data into training and testing sets
-    x_train, x_test, y_train, y_test = train_test_split(reviews, ratings, test_size=test_size, random_state=seed, shuffle=True)
+    # If we're testing...
+    if test_size == 1.0:
+        # ...use all data for testing, none for training
+        return [], reviews, [], ratings
+    else:
+        # Split the data into training and testing sets
+        x_train, x_test, y_train, y_test = train_test_split(reviews, ratings, test_size=test_size, random_state=seed, shuffle=True)
 
     return x_train, x_test, y_train, y_test
 

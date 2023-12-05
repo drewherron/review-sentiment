@@ -132,10 +132,10 @@ def main():
         print(f"Number of testing inputs:\t{len(x_test)}")
         print(f"Number of testing targets:\t{len(y_test)}\n")
 
-        print(f"First training input:\t{x_train[0]}")
-        print(f"First training target:\t{y_train[0]}")
-        print(f"First testing input:\t{x_test[0]}")
-        print(f"First testing target:\t{y_test[0]}")
+        #print(f"First training input:\t{x_train[0]}")
+        #print(f"First training target:\t{y_train[0]}")
+        #print(f"First testing input:\t{x_test[0]}")
+        #print(f"First testing target:\t{y_test[0]}")
 
     # Run the selected model
     # MLP
@@ -147,15 +147,13 @@ def main():
         results = bayesian_model.train_and_test(x_train, x_test, y_train, y_test)
 
     # BERT
-    # I should probably move much of this to the module file...
     elif choice == '3':
 
         # Instantiate BERT model
         classifier = bert_model.BertSentiment(num_labels=5)
-        choice = input("\n1. Train model\n2. Test model\n>> ")
 
         # Train BERT
-        if choice == '1':
+        if 0 < test_size < 1.0:
 
             if out_model_path is None:
                 print("\nWARNING: No file path provided - model will not be saved.")
@@ -175,7 +173,7 @@ def main():
                 print(results)
 
         # Test BERT
-        elif choice == '2':
+        elif test_size == 1.0:
 
             # No point in plotting a test
             plot = False
@@ -191,9 +189,7 @@ def main():
 
                 # Test the model
                 results = classifier.test(x_test, y_test)
-                # Print results
-                #print(f"Loss:\t\t{results['testing_loss']}")
-                #print(f"Accuracy:\t{results['testing_accuracy']}")
+
                 if verbose:
                     print("Results:")
                     print(results)
