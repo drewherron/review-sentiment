@@ -107,7 +107,7 @@ class BertSentiment:
 
 
     # Test the previously trained and loaded model
-    def test(self, x_test, y_test, print_cm=False):
+    def test(self, x_test, y_test):
         # Adjust the labels to be zero-indexed
         y_test = [label - 1 for label in y_test]
 
@@ -126,7 +126,6 @@ class BertSentiment:
 
         # Calculate fuzzy accuracy (within one)
         within_one = self.fuzzy_accuracy(predicted_labels, y_test)
-        print(f"Adjusted Accuracy (Within One): {within_one}")
 
         # Results
         results = {
@@ -136,10 +135,9 @@ class BertSentiment:
         }
 
         # Add confusion matrix
-        if print_cm:
-            print("\nGenerating confusion matrix...")
-            cm = self.confusion_matrix(predicted_labels, y_test)
-            results['confusion_matrix'] = cm.tolist()
+        print("\nGenerating confusion matrix...")
+        cm = self.confusion_matrix(predicted_labels, y_test)
+        results['confusion_matrix'] = cm.tolist()
 
         return results
 
@@ -153,54 +151,37 @@ class BertSentiment:
                 correct += 1
         return correct / len(predictions)
 
+
     # Train the model, then test
     def train_and_test(self, x_train, x_test, y_train, y_test, print_cm=False, epochs=4):
 
         # Adjust the labels to be zero-indexed
         y_train = [label - 1 for label in y_train]
-        y_test = [label - 1 for label in y_test]
 
-        # Encode the training and testing data
+        # Encode the training data
         train_dataset = self.encode_examples(x_train, y_train)
-        test_dataset = self.encode_examples(x_test, y_test)
 
         # Compile the model
-        self.compile_model(self.learning_rate)
+        self.compile_model()
 
         # Train the model
         print("\nTraining model...")
         history = self.model.fit(
             train_dataset.shuffle(10000).batch(self.batch_size).prefetch(tf.data.experimental.AUTOTUNE),
             epochs=epochs,
-            validation_data=test_dataset.batch(self.batch_size)
+            validation_data=self.encode_examples(x_test, [label - 1 for label in y_test]).batch(self.batch_size)
         )
 
-        # Test the model
-        print("\nTesting model...")
-        loss, accuracy = self.model.evaluate(test_dataset.batch(self.batch_size))
+        # Call the test method to evaluate the model
+        test_results = self.test(x_test, y_test)
 
-        # Results for plotting
+        # Combine training and testing results
         results = {
             'training_loss': history.history['loss'],
             'training_accuracy': history.history['accuracy'],
             'validation_loss': history.history['val_loss'],
-            'validation_accuracy': history.history['val_accuracy'],
-            'testing_loss': loss,
-            'testing_accuracy': accuracy
+            'validation_accuracy': history.history['val_accuracy']
         }
-
-        # Confusion matrix
-        if print_cm:
-            # Get predictions
-            print("\nGetting predictions for confusion matrix...")
-            test_dataset_batched = test_dataset.batch(self.batch_size)
-            raw_predictions = self.model.predict(test_dataset_batched)
-            predicted_labels = np.argmax(raw_predictions.logits, axis=1)
-
-            # Create confusion matrix
-            cm = self.confusion_matrix(predicted_labels, y_test)
-
-            # Update results with confusion matrix data
-            results['confusion_matrix'] = cm.tolist()
+        results.update(test_results)
 
         return results
