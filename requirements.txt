@@ -1,5 +1,8 @@
+# in your Python virtual environment:
+# pip install -r requirements.txt
 tensorflow
 torch
 transformers
 numpy
+scikit-learn
 matplotlib
