@@ -97,7 +97,7 @@ def main():
     results = {}
 
     # Main menu
-    choice = input("Select model:\n1. Neural network\n2. Bayesian model\n3. BERT\n4. Plot test\n>> ")
+    choice = input("Select model:\n1. Neural network\n2. Bayesian model\n3. BERT\n4. Plot results\n>> ")
 
     # Load data
     # Only if the choice is valid (to save on time/computation)
@@ -160,7 +160,7 @@ def main():
                 print("\nWARNING: No file path provided - model will not be saved.")
 
             # Train and test the model
-            results = classifier.train_and_test(x_train, x_test, y_train, y_test, print_cm, epochs, batch_size=8)
+            results = classifier.train_and_test(x_train, x_test, y_train, y_test, print_cm, epochs)
 
             # Save trained model
             if out_model_path is not None:
@@ -185,18 +185,17 @@ def main():
                 print("\nModel loaded successfully.\n")
 
                 # Not sure why it needed this
-                classifier.compile_model(learning_rate=2e-5)
+                classifier.compile_model()
                 print("Model compiled successfully.")
 
                 # Test the model
-                results = classifier.test(x_test, y_test, print_cm, batch_size=8)
+                results = classifier.test(x_test, y_test)
                 # Print results
                 #print(f"Loss:\t\t{results['testing_loss']}")
                 #print(f"Accuracy:\t{results['testing_accuracy']}")
                 if verbose:
                     print("Results:")
                     print(results)
-
 
             except Exception as e:
                 print(f"Error: {e}")
@@ -205,9 +204,24 @@ def main():
             print("Invalid choice.")
             return
 
-    # Just for testing, remove before submission
+    # Plot results
     elif choice == '4':
-        results = pl.dummy_data
+        plot = True
+        print_cm = True
+        plotting_file = input("Enter filename of saved results (or leave blank to test plot with dummy data):\n>> ").strip()
+
+        if plotting_file:
+            try:
+                with open(plotting_file, 'r') as file:
+                    results = json.load(file)
+            except FileNotFoundError:
+                print(f"File not found: {plotting_file}")
+                return
+            except json.JSONDecodeError:
+                print(f"Error reading file: {plotting_file}. Be sure it's a valid JSON file.")
+                return
+        else:
+            results = pl.dummy_data
 
     else:
         print("Invalid choice.")
