@@ -2,16 +2,18 @@ import tensorflow as tf
 import numpy as np
 from transformers import BertTokenizer, TFBertForSequenceClassification
 from sklearn.model_selection import train_test_split
-import os
-# Filter out Tensorflow messages (set to 0 to see all)
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 
 class BertSentiment:
 
-    def __init__(self, model_name='bert-base-uncased', num_labels=5, max_length=512):
+#    def __init__(self, model_name='prajjwal1/bert-tiny', num_labels=5, max_length=512):
+    def __init__(self, model_name='bert-base-uncased', num_labels=5, max_length=512, learning_rate=2e-5, batch_size=8):
         self.tokenizer = BertTokenizer.from_pretrained(model_name)
-        self.model = TFBertForSequenceClassification.from_pretrained(model_name, num_labels=num_labels)
+        #self.model = TFBertForSequenceClassification.from_pretrained(model_name, num_labels=num_labels)
+        self.model = TFBertForSequenceClassification.from_pretrained(model_name, num_labels=num_labels, from_pt=True)
         self.max_length = max_length
+        self.learning_rate = learning_rate
+        self.batch_size = batch_size
 
     # Get datset in the right format for Tensorflow
     def encode_examples(self, texts, labels):
@@ -49,10 +51,10 @@ class BertSentiment:
 
 
     # Compile the BERT model
-    def compile_model(self, learning_rate=2e-5):
+    def compile_model(self):
 
         # Using Adam optimizer
-        optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate, epsilon=1e-08)
+        optimizer = tf.keras.optimizers.Adam(self.learning_rate, epsilon=1e-08)
 
         # Sparse Categorical Crossentropy
         # logits: not softmax/probability labels
@@ -66,10 +68,10 @@ class BertSentiment:
 
     # Test the model
     # (but simpler, not to call from main)
-    def evaluate(self, test_dataset, batch_size=8):
+    def evaluate(self, test_dataset):
 
         # Batch the test dataset
-        test_dataset = test_dataset.batch(batch_size)
+        test_dataset = test_dataset.batch(self.batch_size)
 
         # Evaluate the model
         loss, accuracy = self.model.evaluate(test_dataset)
@@ -105,13 +107,13 @@ class BertSentiment:
 
 
     # Test the previously trained and loaded model
-    def test(self, x_test, y_test, print_cm=False, batch_size=8):
+    def test(self, x_test, y_test, print_cm=False):
         # Adjust the labels to be zero-indexed
         y_test = [label - 1 for label in y_test]
 
         # Encode the testing data
         test_dataset = self.encode_examples(x_test, y_test)
-        test_dataset_batched = test_dataset.batch(batch_size)
+        test_dataset_batched = test_dataset.batch(self.batch_size)
 
         # Evaluate the model
         print("\nTesting model...")
@@ -152,7 +154,7 @@ class BertSentiment:
         return correct / len(predictions)
 
     # Train the model, then test
-    def train_and_test(self, x_train, x_test, y_train, y_test, print_cm=False, epochs=4, batch_size=8):
+    def train_and_test(self, x_train, x_test, y_train, y_test, print_cm=False, epochs=4):
 
         # Adjust the labels to be zero-indexed
         y_train = [label - 1 for label in y_train]
@@ -163,19 +165,19 @@ class BertSentiment:
         test_dataset = self.encode_examples(x_test, y_test)
 
         # Compile the model
-        self.compile_model(learning_rate=2e-5)
+        self.compile_model(self.learning_rate)
 
         # Train the model
         print("\nTraining model...")
         history = self.model.fit(
-            train_dataset.shuffle(10000).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE),
+            train_dataset.shuffle(10000).batch(self.batch_size).prefetch(tf.data.experimental.AUTOTUNE),
             epochs=epochs,
-            validation_data=test_dataset.batch(batch_size)
+            validation_data=test_dataset.batch(self.batch_size)
         )
 
         # Test the model
         print("\nTesting model...")
-        loss, accuracy = self.model.evaluate(test_dataset.batch(batch_size))
+        loss, accuracy = self.model.evaluate(test_dataset.batch(self.batch_size))
 
         # Results for plotting
         results = {
@@ -191,7 +193,7 @@ class BertSentiment:
         if print_cm:
             # Get predictions
             print("\nGetting predictions for confusion matrix...")
-            test_dataset_batched = test_dataset.batch(batch_size)
+            test_dataset_batched = test_dataset.batch(self.batch_size)
             raw_predictions = self.model.predict(test_dataset_batched)
             predicted_labels = np.argmax(raw_predictions.logits, axis=1)
 
