@@ -17,6 +17,7 @@ IN_FILE_PATH = "./data/Appliances.json"
 IN_FILE_PATH_TEST = None # Dataset to test (but not train) on
 OUT_MODEL_PATH = None    # File path to save model
 IN_MODEL_PATH = None     # File path to load model
+JSON_RESULTS_PATH = None # File path to save JSON results
 MAX_REVIEWS = 200000     # Max number of reviews to load from data
 TEST_SIZE = 0.2          # Percentage of data to reserve for testing
 EPOCHS = 4               # Number of epochs to run in training
@@ -57,11 +58,11 @@ def get_args():
     parser.add_argument("-p", "--plot",
                         action="store_true",
                         help="plot results after testing")
-    parser.add_argument("-r", "--dump-results",
+    parser.add_argument("-r", "--results",
                         nargs='?',
                         const='training_results.json',
-                        default=OUT_MODEL_PATH,
-                        help="store results in a JSON file (filename optional)")
+                        default=JSON_RESULTS_PATH,
+                        help="JSON file for saving/loading results")
     parser.add_argument("-s", "--seed",
                         type=int,
                         default=SEED,
@@ -83,7 +84,7 @@ def main():
     args = get_args()
     balanced_load = args.balanced
     print_cm = args.confusion_matrix
-    dump_results = args.dump_results
+    json_results_file = args.results
     max_reviews = args.num_reviews
     seed = args.seed
     test_size = args.test
@@ -119,7 +120,7 @@ def main():
         print(f"verbose:\t\t\t{verbose}")
         print(f"plot:\t\t\t\t{plot}")
         print(f"confusion_matrix:\t\t{print_cm}")
-        print(f"dump_results:\t\t\t{dump_results}")
+        print(f"json_results_file:\t\t{json_results_file}")
         print(f"balanced_load:\t\t\t{balanced_load}\n")
         print(f"max_reviews:\t\t\t{max_reviews}")
         print(f"test_size:\t\t\t{test_size}")
@@ -208,17 +209,18 @@ def main():
     elif choice == '4':
         plot = True
         print_cm = True
-        plotting_file = input("Enter filename of saved results (or leave blank to test plot with dummy data):\n>> ").strip()
+        if json_results_file is None:
+            json_results_file = input("Enter filename of saved results (or leave blank to test plot with dummy data):\n>> ").strip()
 
-        if plotting_file:
+        if json_results_file:
             try:
-                with open(plotting_file, 'r') as file:
+                with open(json_results_file, 'r') as file:
                     results = json.load(file)
             except FileNotFoundError:
-                print(f"File not found: {plotting_file}")
+                print(f"File not found: {json_results_file}")
                 return
             except json.JSONDecodeError:
-                print(f"Error reading file: {plotting_file}. Be sure it's a valid JSON file.")
+                print(f"Error reading file: {json_results_file}. Be sure it's a valid JSON file.")
                 return
         else:
             results = pl.dummy_data
@@ -250,11 +252,11 @@ def main():
     print()
 
     # Save results to JSON file
-    if dump_results is not None:
-        with open('training_results.json', 'w') as file:
+    if json_results_file is not None:
+        with open('json_results_file', 'w') as file:
             json.dump(results, file)
 
-        print("Results saved to 'training_results.json'.\n")
+        print(f"Results saved to {json_results_file}.\n")
 
 
 if __name__ == "__main__":
