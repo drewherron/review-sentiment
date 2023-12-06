@@ -37,7 +37,7 @@ def get_df(path):
 # This function uses the NLTK library to split, find, and display the top ten
 # "meaningful words" from the given dataset, which, in this case, are
 # adjectives and adverbs.
-def count_top_words(dataset, top_ten=10):
+def count_top_words(dataset, num_words=10):
     rows = dataset.shape[0]
     tagged_words = []
     # Holds insignificant words with little meaning.
@@ -65,9 +65,9 @@ def count_top_words(dataset, top_ten=10):
     freq_dist = nltk.probability.FreqDist(meaningful_words)
 
     # Holds the top ten most frequent words in sorted order (most to least).
-    top_ten_words = freq_dist.most_common(top_ten)
+    top_words = freq_dist.most_common(num_words)
 
-    print(top_ten_words)
+    return top_words
 
 
 # Run test of NLTK
