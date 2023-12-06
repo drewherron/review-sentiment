@@ -2,12 +2,12 @@ import torch
 import torch.nn as nn
 import torch.nn
 import numpy as np
-import parse_words
+import process_word_counts
 
 
 class NNSentiment(nn.Module):
     #Defines the nn
-    def __init__(self, model_name = "NN_sentiment", num_labels = 5, num_freq = 52, l1_size = 100, l2_size = 100):
+    def __init__(self, model_name = "NN_sentiment", learning_rate=2e-5, batch_size=8, momentum = 2e-5, num_labels = 5, num_freq = 52, l1_size = 100, l2_size = 100):
         super(NNSentiment, self).__init__()
         self.model_name = model_name
         self.num_labels = num_labels
@@ -36,11 +36,12 @@ class NNSentiment(nn.Module):
 
 
     #Processes the data from full reviews into coherent frequencies
-    def preprocess_data(self, X, y):
-        pass
+    def preprocess_data(self, train_X, test_X):
+        features = process_word_counts.choose_features(train_X, test_X)
+        print(features)
 
     #Trains one epoch
-    def train(self, learning_rate, momentum, batch_size, train_X, train_y):
+    def train(self, train_X, train_y):
         pass
         #criterion = nn.CrossEntropyLoss()
         
@@ -53,8 +54,8 @@ class NNSentiment(nn.Module):
         pass
 
     #Trains and tests the network for an amount of epoch and displays the results
-    def train_and_test(self, lr, momentum, batch_size, train_X, train_y, test_X, test_y):
-        pass
+    def train_and_test(self, train_X, train_y, test_X, test_y):
+        self.preprocess_data(train_X, test_X)
 
     #Just tests the network 
     def test_only(self, test_X, test_y):

@@ -4,7 +4,7 @@ import os
 # Filter out Tensorflow messages (set to 0 to see all)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-#import nn_model
+import nn_model
 import bayesian_model
 import bert_model
 
@@ -140,7 +140,8 @@ def main():
     # Run the selected model
     # MLP
     if choice == '1':
-        results = nn_model.train_and_test(x_train, x_test, y_train, y_test)
+        model = nn_model.NNSentiment()
+        model.train_and_test(x_train, x_test, y_train, y_test)
 
     # Bayesian
     elif choice == '2':
