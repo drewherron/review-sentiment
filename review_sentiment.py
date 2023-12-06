@@ -150,7 +150,7 @@ def main():
     elif choice == '3':
 
         # Instantiate BERT model
-        classifier = bert_model.BertSentiment(num_labels=5)
+        classifier = bert_model.BertSentiment(num_labels=5, max_length=512, learning_rate=2e-5, batch_size=8)
 
         # Train BERT
         if 0 < test_size < 1.0:
@@ -249,7 +249,7 @@ def main():
 
     # Save results to JSON file
     if json_results_file is not None:
-        with open('json_results_file', 'w') as file:
+        with open(json_results_file, 'w') as file:
             json.dump(results, file)
 
         print(f"Results saved to {json_results_file}.\n")
