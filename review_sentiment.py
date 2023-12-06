@@ -5,7 +5,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 #import nn_model
-#import bayesian_model
+import bayesian_model
 import bert_model
 
 import loading_module as ld
@@ -144,7 +144,16 @@ def main():
 
     # Bayesian
     elif choice == '2':
-        results = bayesian_model.train_and_test(x_train, x_test, y_train, y_test)
+        # Choose model and feature parameters.
+        model_name, feat_all, n_features, is_meaningful = bayesian_model.get_model_parameters()
+        if n_features != 0:
+            # Instantiate Naive Bayes model.
+            classifier = bayesian_model.BayesSentiment(model_name, n_features, feat_all, is_meaningful)
+
+            # Train, test, and get results.
+            results = classifier.train_and_test(x_train, x_test, y_train, y_test, print_cm)
+        else:
+            return
 
     # BERT
     elif choice == '3':

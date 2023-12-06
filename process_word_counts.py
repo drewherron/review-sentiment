@@ -15,7 +15,7 @@ def choose_features(x_train, x_test, n_features, all_words=False,
     reviews = x_train + x_test
 
     # Gather all split words from each review that are not stop words.
-    for review in reviews:
+    for review in tqdm(reviews, "Processing Features"):
         # Check for and skip reviews with NaN values.
         if not pd.isna(review):
             tokens = nltk.word_tokenize(review)
@@ -54,7 +54,7 @@ def encode_examples(reviews, features, batch_size=1000):
     processed_data = []
 
     # Follow progress for each batch.
-    for batch in tqdm(batches, "Processing Batches"):
+    for batch in tqdm(batches, "Encoding Examples"):
         processed_data.extend(word_freq_wrapper(batch, features))
 
     dataset = pd.DataFrame(processed_data)
