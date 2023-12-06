@@ -6,3 +6,5 @@ transformers
 numpy
 scikit-learn
 matplotlib
+nltk
+pandas
