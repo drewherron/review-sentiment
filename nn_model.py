@@ -61,7 +61,7 @@ class NNSentiment(nn.Module):
         running_loss = 0.0
         num_correct = 0
         
-        random_order = nprand.permutation(range(len(train_X)))
+        random_order = nprand.permutation(range(len(train_y)))
         #Go through each datapoint in a random order, and optimize for it
         for i in tqdm(random_order, "Training"):
             inputs = train_X[i]
@@ -91,14 +91,12 @@ class NNSentiment(nn.Module):
         num_correct = 0
         if confusion_matrix:
             con_matrix = np.zeros((self.num_labels, self.num_labels))
-        
-        random_order = nprand.permutation(range(len(test_X)))
-        #Go through each datapoint in a random order, and optimize for it
-        for i in tqdm(random_order, "Testing"):
+
+        #Go through each datapoint in order
+        for i in tqdm(range(len(test_X)), "Testing"):
             inputs = test_X[i]
             label = test_y[i] - 1
 
-            #zero the parameter gradients
             outputs = self(inputs)
             predicted = torch.argmax(outputs)
             loss = criterion(outputs, label.squeeze())
@@ -120,10 +118,10 @@ class NNSentiment(nn.Module):
 
     #Trains and tests the network for an amount of epoch and displays the results
     def train_and_test(self, train_X, train_y, test_X, test_y, epochs):
-        train_X, test_X = self.preprocess_data(train_X, test_X) #preprocess data
-
         train_y = torch.tensor(np.array(train_y, dtype=np.int_))
         test_y = torch.tensor(np.array(test_y, dtype=np.int_))
+        
+        train_X, test_X = self.preprocess_data(train_X, test_X) #preprocess data
 
         #Use cross entropy loss and stochastic gradient descent
         criterion = nn.CrossEntropyLoss()
@@ -135,7 +133,8 @@ class NNSentiment(nn.Module):
         test_losses = []
 
         #Run training and testing
-        for i in tqdm(range(epochs), "Training and testing"):
+        for i in range(epochs):
+            print("EPOCH ", i+1, ":")
             train_acc, train_loss = self.train(train_X, train_y, optimizer, criterion) #train on training set
             test_acc, test_loss = self.test(test_X, test_y, criterion); #test on testing set
 
