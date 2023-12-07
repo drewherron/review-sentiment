@@ -6,7 +6,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 #import nn_model
 import bayesian_model
-import bert_model
+# import bert_model
 
 import loading_module as ld
 import plotting_module as pl
@@ -144,15 +144,62 @@ def main():
 
     # Bayesian
     elif choice == '2':
-        # Choose model and feature parameters.
-        model_name, feat_all, n_features, is_meaningful = bayesian_model.get_model_parameters()
-        if n_features != 0:
-            # Instantiate Naive Bayes model.
-            classifier = bayesian_model.BayesSentiment(model_name, n_features, feat_all, is_meaningful)
 
-            # Train, test, and get results.
-            results = classifier.train_and_test(x_train, x_test, y_train, y_test, print_cm)
+        if 0 < test_size < 1.0:
+
+            if out_model_path is None:
+                print("\nWARNING: No file path provided - model will not be saved.")
+
+            # Choose model and feature parameters.
+            model_name, feat_all, n_features, is_meaningful = bayesian_model.get_model_parameters(test_size)
+
+            if n_features != 0:
+                # Instantiate Naive Bayes model.
+                classifier = bayesian_model.BayesSentiment(model_name, n_features, feat_all, is_meaningful)
+
+                # Train, test, and get results.
+                results = classifier.train_and_test(x_train, x_test, y_train, y_test)
+
+            else:
+                return
+
+            # Save features used
+            if out_model_path is not None:
+                try:
+                    classifier.save_features(out_model_path)
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            if verbose:
+                print("Results:")
+                print(results)
+
+        elif test_size == 1.0:
+            # No point in plotting a test
+            plot = False
+
+            # Still choose which Naives Bayes classifier to use.
+            model_name = bayesian_model.get_model_parameters(test_size)
+
+            # Instantiate Naive Bayes model.
+            classifier = bayesian_model.BayesSentiment(model_name)
+
+            # Load features
+            try:
+                classifier.load_features(in_model_path)
+                print("\nModel loaded and compiled successfully.\n")
+
+                # Test the model
+                results = classifier.test(x_test, y_test)
+
+                if verbose:
+                    print("Results:")
+                    print(results)
+
+            except Exception as e:
+                print(f"Error: {e}")
         else:
+            print("Invalid choice.")
             return
 
     # BERT
