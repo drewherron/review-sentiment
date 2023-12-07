@@ -6,7 +6,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import nn_model
 import bayesian_model
-# import bert_model
+import bert_model
 
 import loading_module as ld
 import plotting_module as pl
