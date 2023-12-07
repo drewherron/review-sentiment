@@ -4,12 +4,14 @@ import os
 # Filter out Tensorflow messages (set to 0 to see all)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-#import nn_model
+import nn_model
 import bayesian_model
 # import bert_model
 
 import loading_module as ld
 import plotting_module as pl
+
+import dataset_cleanup
 
 
 # These are defaults, overridden by command line arguments
@@ -140,7 +142,13 @@ def main():
     # Run the selected model
     # MLP
     if choice == '1':
-        results = nn_model.train_and_test(x_train, x_test, y_train, y_test)
+        train_X, train_y = dataset_cleanup.even_selection(x_train, y_train)
+        test_X, test_y = dataset_cleanup.even_selection(x_test, y_test)
+        model = nn_model.NNSentiment()
+        final_loss, final_acc, confusion_matrix = model.train_and_test( train_X, train_y, test_X, test_y, 50)
+        print("Final Accuracy: ", final_acc)
+        print("Final Loss: ", final_loss)
+        print("Confusion Matrix", confusion_matrix)
 
     # Bayesian
     elif choice == '2':
