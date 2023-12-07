@@ -141,7 +141,10 @@ def main():
     # MLP
     if choice == '1':
         model = nn_model.NNSentiment()
-        model.train_and_test(x_train, x_test, y_train, y_test)
+        final_acc, final_loss, confusion_matrix = model.train_and_test(x_train, y_train, x_test, y_test, 1)
+        print("Final Accuracy: ", final_acc)
+        print("Final Loss: ", final_loss)
+        print("Confusion Matrix", confusion_matrix)
 
     # Bayesian
     elif choice == '2':
