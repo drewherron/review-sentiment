@@ -159,11 +159,11 @@ def main():
                 print("\nWARNING: No file path provided - model will not be saved.")
 
             # Choose model and feature parameters.
-            model_name, feat_all, n_features, is_meaningful = bayesian_model.get_model_parameters(test_size)
+            model_name, n_features, feat_type = bayesian_model.get_model_parameters()
 
             if n_features != 0:
                 # Instantiate Naive Bayes model.
-                classifier = bayesian_model.BayesSentiment(model_name, n_features, feat_all, is_meaningful)
+                classifier = bayesian_model.BayesSentiment(model_name, n_features, feat_type)
 
                 # Train, test, and get results.
                 results = classifier.train_and_test(x_train, x_test, y_train, y_test)
@@ -183,14 +183,8 @@ def main():
                 print(results)
 
         elif test_size == 1.0:
-            # No point in plotting a test
-            plot = False
-
-            # Still choose which Naives Bayes classifier to use.
-            model_name = bayesian_model.get_model_parameters(test_size)
-
             # Instantiate Naive Bayes model.
-            classifier = bayesian_model.BayesSentiment(model_name)
+            classifier = bayesian_model.BayesSentiment()
 
             # Load features
             try:
@@ -302,6 +296,12 @@ def main():
         print(f"Final testing accuracy:\t{results['testing_accuracy']}")
     if 'within_one' in results:
         print(f"Accuracy within 1 star:\t{results['within_one']}")
+    if 'overall_precision' in results:
+        print(f"Overall precision:\t{results['overall_precision']}")
+    if 'overall_recall' in results:
+        print(f"Overall recall:\t{results['overall_recall']}")
+    if 'overall_f1_score' in results:
+        print(f"Overall f1_score:\t{results['overall_f1_score']}")
 
     # Print confusion matrix
     if print_cm:

@@ -1,5 +1,4 @@
 import nltk
-import json
 import joblib
 from sklearn.naive_bayes import MultinomialNB
 from sklearn import metrics
@@ -12,123 +11,115 @@ from tqdm import tqdm
 # Naive Bayes classification using MultinomialNB or NLTK Naive Bayes
 # classifier.
 # -----------------------------------------------------------------------------
+# Model save path must have 'MNB_model' or 'NLTKnb_model' in the filename in
+# order to load respective model.
+# ------------------------------------------------------------------------------
 
 # Selection menu for choosing model to use and number and type of features
 # (Saves space in main file).
-def get_model_parameters(test_size=1.0):
+def get_model_parameters():
     choice = input("Select model\n1. Multinomial Naive Bayes classifier\n"
                    "2. NLTK Naive Bayes classifier\n>> ")
     if choice in ['1', '2']:
         if choice == '1':
-            model_name = 'MultinomialNB_model'
+            model_name = 'MNB_model'
         else:
-            model_name = 'NLTK_NB_model'
+            model_name = 'NLTKnb_model'
     else:
         print("Invalid choice")
-        return 0, 0, 0, 0
+        return 0, 0, 0
 
-    # Test size not equal to 1 indicates model is not loaded.
-    if test_size != 1.0:
-        # Choose number of and type of features.
-        choice = input("Use all unique words as features?\n1. Yes\n2. No\n>> ")
-        if choice in ['1', '2']:
-            feat_all = True
-            n_features = 1
-            if choice == '2':
-                feat_all = False
-                try:
-                    sub_choice = int(input("Enter number of features (# of most "
-                                           "common words - will max out at # of "
-                                           "unique words):\n>> "))
-                    if sub_choice > 0:
-                        n_features = sub_choice
-                    else:
-                        print("Invalid choice.")
-                        return 0, 0, 0, 0
-                except ValueError as e:
-                    print(f"{e}")
-                    return 0, 0, 0, 0
-
-            sub_choice = input("Select feature types:\n1. All Words\n"
-                               "2. Adjectives/Adverbs Only\n>> ")
-            if sub_choice in ['1', '2']:
-                is_meaningful = False
-                if sub_choice == '2':
-                    is_meaningful = True
-            else:
-                print("Invalid choice.")
-                return 0, 0, 0, 0
+    # Choose number of and type of features.
+    try:
+        sub_choice = int(input("Enter number of features <= 1000 (# of most "
+                               "common words):\n>> "))
+        if 0 < sub_choice <= 1000:
+            n_features = sub_choice
         else:
             print("Invalid choice.")
-            return 0, 0, 0, 0
-        return model_name, feat_all, n_features, is_meaningful
-    return model_name
+            return 0, 0, 0
+    except ValueError as e:
+        print(f"{e}")
+        return 0, 0, 0
+
+    sub_choice = input("Select feature types:\n1. Adjectives/Adverbs Only\n"
+                       "2. Nouns/Verbs/Interjections Only\n"
+                       "3. All of the above\n>> ")
+    if sub_choice in ['1', '2', '3']:
+        feat_type = sub_choice
+    else:
+        print("Invalid choice.")
+        return 0, 0, 0
+
+    return model_name, n_features, feat_type
 
 
 class BayesSentiment:
-    def __init__(self, model_name='MultinomialNB_model', n_features=1000,
-                 feat_all=False, is_meaningful=True, batch_size=1000):
+    def __init__(self, model_name='MNB_model', n_features=1000,
+                 feat_type='1', batch_size=1000):
         self.model_name = model_name
         self.model = self.compile_model()
         self.n_features = n_features
-        self.feat_all = feat_all
-        self.is_meaningful = is_meaningful
+        self.feat_type = feat_type
         self.batch_size = batch_size
         self.features = []
 
+    # Process words from training and testing dataset that are not stopwords or
+    # stem words.
     def process_data(self, x_train, x_test):
         # Holds words with little meaning.
         stop_words = set(nltk.corpus.stopwords.words('english'))
-        reviews = x_train + x_test
+        # reviews = x_train + x_test
+        lemmatizer = nltk.stem.WordNetLemmatizer()
 
         # Gather all split words from each review that are not stop words.
-        for review in tqdm(reviews, "Processing Features"):
+        for review in tqdm(x_train + x_test, "Processing Features"):
             # Check for and skip reviews with NaN values.
             if not pd.isna(review):
                 tokens = nltk.word_tokenize(review)
-                filtered_words = [word.lower() for word in tokens
-                                  if word.isalpha() and word.lower()
-                                  not in stop_words]
-                for tagged_words in nltk.pos_tag(filtered_words):
-                    yield tagged_words
+                filtered_words = [
+                    lemmatizer.lemmatize(word.lower()) for word in tokens
+                    if word.isalpha() and word.lower() not in stop_words
+                ]
+                tagged_words = nltk.pos_tag(filtered_words)
+                for word, pos in tagged_words:
+                    yield word, pos
+
+    # Return words that match the given part of speech tags.
+    def get_word_pos(self, words, pos_tags):
+        return [word for word, pos in words if pos in pos_tags]
 
     # Select feature words, all or most frequent, all types or
     # adjective/adverbs only.
     def choose_features(self, x_train, x_test):
-        # Holds words with little meaning.
-        # stop_words = set(nltk.corpus.stopwords.words('english'))
-        # tagged_words = []
-        # reviews = x_train + x_test
-
-        # Gather all split words from each review that are not stop words.
-        # for review in tqdm(reviews, "Processing Features"):
-            # Check for and skip reviews with NaN values.
-            # if not pd.isna(review):
-            #     tokens = nltk.word_tokenize(review)
-            #     filtered_words = [word.lower() for word in tokens
-            #                       if word.isalpha() and word.lower()
-            #                       not in stop_words]
-            #     tagged_words.extend(nltk.pos_tag(filtered_words))
+        # Process non-stop and stemmed words.
         tagged_words = self.process_data(x_train, x_test)
-        # Identify parts of speech for each word that relate to adjectives (JJ,
-        # JJR, JJS) or adverbs (RB) - Meaningful words.
-        if self.is_meaningful:
-            split_words = [word for word, pos in tagged_words
-                           if pos.startswith('JJ') or pos.startswith('JJR')
-                           or pos.startswith('JJS') or pos.startswith('RB')]
+
+        # Only count adjectives and adverbs.
+        if self.feat_type == '1':
+            pos_tags = ['JJ', 'JJR', 'JJS', 'RB', 'RBR', 'RBS']
+
+        # Only count nouns, verbs, and interjections.
+        elif self.feat_type == '2':
+            pos_tags = [
+                'NN', 'NNS', 'NNP', 'NNPS', 'VB', 'VBD',
+                'VBG', 'VBN', 'VBP', 'VBZ', 'UH'
+            ]
+
+        # Count all of the above parts of speech.
         else:
-            split_words = [word for word, pos in tagged_words]
+            pos_tags = [
+                'JJ', 'JJR', 'JJS', 'RB', 'RBR', 'RBS', 'NN', 'NNS', 'NNP',
+                'NNPS', 'VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ', 'UH'
+            ]
+
+        split_words = self.get_word_pos(tagged_words, pos_tags)
 
         # Count the frequency of each word in the new array.
         freq_dist = nltk.probability.FreqDist(split_words)
 
-        # Return the chosen features.
-        if not self.feat_all:
-            self.features = [word for word, pos in freq_dist.most_common(int(self.n_features))]
-        else:
-            self.features = list(set(split_words))
-
-        print(len(self.features))
+        # Assign the most common words used as the chosen features.
+        self.features = [word for word, pos in freq_dist.most_common(self.n_features)]
 
     # Get dataset in the right format for Pandas.
     def encode_examples(self, reviews):
@@ -145,20 +136,14 @@ class BayesSentiment:
                     processed_data.append(self.track_word_occurrence(review))
 
         # Return correct format for correct model.
-        if self.model_name == 'MultinomialNB_model':
+        if self.model_name == 'MNB_model':
             return pd.DataFrame(processed_data)
         return processed_data
-
-    # Yield the word frequency counts for all reviews.
-    # def track_word_wrapper(self, reviews):
-    #     for review in reviews:
-    #         if not pd.isna(review):
-    #             yield self.track_word_occurrence(review)
 
     # Count number of feature occurrences in a review.
     def track_word_occurrence(self, review):
         words = nltk.word_tokenize(review.lower())
-        if self.model_name == 'MultinomialNB_model':
+        if self.model_name == 'MNB_model':
             word_occurs = {word: words.count(word) for word in self.features}
         else:
             word_occurs = {word: word in words for word in self.features}
@@ -166,14 +151,14 @@ class BayesSentiment:
 
     # Compile model either MultinomialNB or NLTK classifier model.
     def compile_model(self):
-        # NLTK requires the training dataset and will be compiled later if
-        # chosen.
-        if self.model_name == 'MultinomialNB_model':
+        # NLTK requires the training dataset and will be compiled in fit
+        # method, if chosen.
+        if self.model_name == 'MNB_model':
             return MultinomialNB()
 
     # Train a model with the training dataset.
     def fit(self, train_dataset, train_labels):
-        if self.model_name == 'MultinomialNB_model':
+        if self.model_name == 'MNB_model':
             self.model.fit(train_dataset, train_labels)
         else:
             labeled_dataset = list(zip(train_dataset, train_labels))
@@ -182,7 +167,7 @@ class BayesSentiment:
     # Test and predict with respect to the testing dataset. Model needs to be
     # an argument due to NLTK restrictions.
     def predict(self, model, test_dataset):
-        if self.model_name == 'MultinomialNB_model':
+        if self.model_name == 'MNB_model':
             return model.predict(test_dataset)
         else:
             return model.classify_many(test_dataset)
@@ -190,8 +175,22 @@ class BayesSentiment:
     # Evaluate a model's performance.
     def evaluate(self, actuals, predictions):
         accuracy = metrics.accuracy_score(actuals, predictions)
-        loss = metrics.mean_squared_error(actuals, predictions)
-        return loss, accuracy
+        precision = metrics.precision_score(actuals, predictions,
+                                            average='weighted', zero_division=0)
+        recall = metrics.recall_score(actuals, predictions,
+                                      average='weighted', zero_division=0)
+        f1_score = metrics.f1_score(actuals, predictions,
+                                    average='weighted', zero_division=0)
+
+        precisions = metrics.precision_score(actuals, predictions,
+                                             average=None, zero_division=0)
+        recalls = metrics.recall_score(actuals, predictions,
+                                       average=None, zero_division=0)
+        f1_scores = metrics.f1_score(actuals, predictions,
+                                     average=None, zero_division=0)
+
+        return (accuracy, precisions, recalls, f1_scores,
+                precision, recall, f1_score)
 
     # Save the model.
     def save_features(self, save_path):
@@ -201,6 +200,13 @@ class BayesSentiment:
 
     # Load an existing model.
     def load_features(self, load_path):
+        if 'MNB_model' in load_path:
+            self.model_name = 'MNB_model'
+        elif 'NLTKnb_model' in load_path:
+            self.model_name = 'NLTKnb_model'
+        else:
+            raise Exception("Unrecognized model name of file path.")
+
         model_data = joblib.load(load_path)
         self.model = model_data['classifier']
         self.features = model_data['features']
@@ -219,12 +225,17 @@ class BayesSentiment:
 
         # Test and get results
         predictions = self.predict(self.model, test_dataset)
-        loss, accuracy = self.evaluate(y_test, predictions)
+        accuracy, precisions, recalls, f1_scores, precision, recall, f1_score = self.evaluate(y_test, predictions)
 
         results = {
-            'testing_loss': loss,
             'testing_accuracy': accuracy,
-            'confusion_matrix': self.confusion_matrix(predictions, y_test)
+            'overall_precision': precision,
+            'overall_recall': recall,
+            'overall_f1_score': f1_score,
+            'testing_precisions': precisions.tolist(),
+            'testing_recalls': recalls.tolist(),
+            'testing_f1_scores': f1_scores.tolist(),
+            'confusion_matrix': self.confusion_matrix(predictions, y_test).tolist()
         }
 
         return results
@@ -242,12 +253,17 @@ class BayesSentiment:
         # Fit training dataset, test, and get results.
         self.fit(train_dataset, y_train)
         predictions = self.predict(self.model, test_dataset)
-        loss, accuracy = self.evaluate(y_test, predictions)
+        accuracy, precisions, recalls, f1_scores, precision, recall, f1_score = self.evaluate(y_test, predictions)
 
         results = {
-            'testing_loss': loss,
             'testing_accuracy': accuracy,
-            'confusion_matrix': self.confusion_matrix(predictions, y_test)
+            'overall_precision': precision,
+            'overall_recall': recall,
+            'overall_f1_score': f1_score,
+            'testing_precisions': precisions.tolist(),
+            'testing_recalls': recalls.tolist(),
+            'testing_f1_scores': f1_scores.tolist(),
+            'confusion_matrix': self.confusion_matrix(predictions, y_test).tolist()
         }
 
         return results

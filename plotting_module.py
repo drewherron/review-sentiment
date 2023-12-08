@@ -4,26 +4,48 @@ import numpy as np
 
 # Plot the model metrics
 def plot_results(results, title='Model Performance'):
+    keys_for_epochs = ['training_loss', 'validation_loss', 'training_accuracy', 'validation_accuracy']
     plt.figure(figsize=(12, 8))
     plt.rcParams['font.size'] = 20
 
-    # Plot training loss (optional)
-    if 'training_loss' in results:
-        plt.plot(range(len(results['training_loss'])), results['training_loss'], label='Training Loss', color='orange', linestyle='dashed')
+    # Plot with epochs or with classes depending on model results.
+    if any(key in results for key in keys_for_epochs):
+        # Plot training loss (optional)
+        if 'training_loss' in results:
+            plt.plot(range(len(results['training_loss'])), results['training_loss'], label='Training Loss', color='orange', linestyle='dashed')
 
-    # Plot testing loss (optional)
-    if 'validation_loss' in results:
-        plt.plot(range(len(results['validation_loss'])), results['validation_loss'], label='Testing Loss', color='green', linestyle='dashed')
+        # Plot testing loss (optional)
+        if 'validation_loss' in results:
+            plt.plot(range(len(results['validation_loss'])), results['validation_loss'], label='Testing Loss', color='green', linestyle='dashed')
 
-    # Plot training accuracy
-    if 'training_accuracy' in results:
-        plt.plot(range(len(results['training_accuracy'])), results['training_accuracy'], label='Training Accuracy', color='red')
+        # Plot training accuracy
+        if 'training_accuracy' in results:
+            plt.plot(range(len(results['training_accuracy'])), results['training_accuracy'], label='Training Accuracy', color='red')
 
-    # Plot validation accuracy
-    if 'validation_accuracy' in results:
-        plt.plot(range(len(results['validation_accuracy'])), results['validation_accuracy'], label='Testing Accuracy', color='blue')
+        # Plot validation accuracy
+        if 'validation_accuracy' in results:
+            plt.plot(range(len(results['validation_accuracy'])), results['validation_accuracy'], label='Testing Accuracy', color='blue')
 
-    plt.xlabel('Epochs')
+        plt.xlabel('Epochs')
+
+    else:
+        # Plot testing precision
+        if 'testing_precisions' in results:
+            plt.plot(range(1, len(results['testing_precisions']) + 1), results['testing_precisions'], label='Precision',
+                     color='orange', linestyle='dashed')
+
+        # Plot testing recall
+        if 'testing_recalls' in results:
+            plt.plot(range(1, len(results['testing_recalls']) + 1), results['testing_recalls'], label='Recall',
+                     color='green', linestyle='dashed')
+
+        # Plot training accuracy
+        if 'testing_f1_scores' in results:
+            plt.plot(range(1, len(results['testing_f1_scores']) + 1), results['testing_f1_scores'], label='F1 Score',
+                     color='red')
+
+        plt.xlabel('Class')
+
     plt.ylabel('Metrics')
     plt.title(title)
     plt.legend(loc='best')
