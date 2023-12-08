@@ -10,7 +10,7 @@ import math
 
 class NNSentiment(nn.Module):
     #Defines the nn
-    def __init__(self, model_name = "NN_sentiment", learning_rate=2e-5, batch_size=8, momentum = 2e-5, num_labels = 5, num_freq = 50, l1_size = 100, l2_size = 100):
+    def __init__(self, model_name = "NN_sentiment", learning_rate=2e-5, momentum = 2e-5, num_labels = 5, num_freq = 50, l1_size = 100, l2_size = 100):
         super(NNSentiment, self).__init__()
         self.model_name = model_name
         self.num_labels = num_labels
@@ -18,7 +18,6 @@ class NNSentiment(nn.Module):
         self.l1_size = l1_size
         self.l2_size = l2_size
         self.lr = learning_rate
-        self.batch_size = batch_size
         self.momentum = momentum
 
         #Define the neural network
@@ -90,7 +89,7 @@ class NNSentiment(nn.Module):
         running_loss = 0.0
         num_correct = 0
         if confusion_matrix:
-            con_matrix = np.zeros((self.num_labels, self.num_labels))
+            con_matrix = np.zeros((self.num_labels, self.num_labels), dtype=int)
 
         #Go through each datapoint in order
         for i in tqdm(range(len(test_X)), "Testing"):
@@ -131,12 +130,20 @@ class NNSentiment(nn.Module):
         train_losses = []
         test_accuracies = []
         test_losses = []
-
+        #prev_loss = -1
         #Run training and testing
+        test_loss, test_acc = self.test(test_X, test_y, criterion); #test on testing set
+        test_accuracies.append(test_acc)
+        test_losses.append(test_loss)
         for i in range(epochs):
             print("EPOCH ", i+1, ":")
-            train_acc, train_loss = self.train(train_X, train_y, optimizer, criterion) #train on training set
-            test_acc, test_loss = self.test(test_X, test_y, criterion); #test on testing set
+            train_loss, train_acc = self.train(train_X, train_y, optimizer, criterion) #train on training set
+            test_loss, test_acc = self.test(test_X, test_y, criterion); #test on testing set
+            
+            print("Training Acc: ", train_acc)
+            print("Training Loss: ", train_loss)
+            print("Test Acc: ", test_acc)
+            print("Test Loss: ", test_loss)
 
             #record results to charts
             train_accuracies.append(train_acc)
@@ -144,23 +151,26 @@ class NNSentiment(nn.Module):
             test_accuracies.append(test_acc)
             test_losses.append(test_loss)
 
+            #stop if our loss begins to go up then stop
+            #if i != 0 and prev_loss < test_loss:
+            #    print("Stopped early at epoch ", i+1)
+            #break
+
+            #prev_loss = test_loss
+
         #Generate confusion matrix
+
+        results = {
+            'training_loss': train_losses,
+            'training_accuracy': train_accuracies,
+            'validation_loss': test_losses,
+            'validation_accuracy': test_accuracies
+        }
+
         final_acc, final_loss, confusion_matrix = self.test(test_X, test_y, criterion, confusion_matrix=True)
-        return final_acc, final_loss, confusion_matrix
+        return final_acc, final_loss, confusion_matrix, results
 
 
     #Just tests the network 
     def test_only(self, test_X, test_y):
-        pass
-
-    #Saves the network
-    def save_model(self, save_path):
-        pass
-
-    #loads the network
-    def load_model(self, load_path):
-        pass
-
-    #creates a confusion matrix from 
-    def confusion_matrix(self, results_array):
         pass
