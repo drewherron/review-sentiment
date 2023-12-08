@@ -5,4 +5,4 @@ This program trains and tests three classification models, in the context of sen
 
 The three methods implemented are a Bidirectional Encoder Representations from Transformers (BERT) Natural Language Processing model, a Multilayer Perceptron model, and a Naive Bayes classification model (tests two different classifiers).
 
-Project for Portland State University's CS 545 - Machine Learning course.
+Project for Portland State University's CS 545 - Machine Learning course (2023).
