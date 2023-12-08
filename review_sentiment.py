@@ -140,8 +140,8 @@ def main():
     # Run the selected model
     # MLP
     if choice == '1':
-        model = nn_model.NNSentiment()
-        final_loss, final_acc, confusion_matrix = model.train_and_test( x_train, y_train, x_test, y_test, 1)
+        model = nn_model.NNSentiment(learning_rate=0.00001, momentum=0.9, num_freq=200)
+        final_loss, final_acc, confusion_matrix = model.train_and_test( x_train, y_train, x_test, y_test, 50)
         print("Final Accuracy: ", final_acc)
         print("Final Loss: ", final_loss)
         print("Confusion Matrix", confusion_matrix)
