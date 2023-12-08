@@ -132,6 +132,9 @@ class NNSentiment(nn.Module):
         test_losses = []
         #prev_loss = -1
         #Run training and testing
+        test_loss, test_acc = self.test(test_X, test_y, criterion); #test on testing set
+        test_accuracies.append(test_acc)
+        test_losses.append(test_loss)
         for i in range(epochs):
             print("EPOCH ", i+1, ":")
             train_loss, train_acc = self.train(train_X, train_y, optimizer, criterion) #train on training set
@@ -156,8 +159,16 @@ class NNSentiment(nn.Module):
             #prev_loss = test_loss
 
         #Generate confusion matrix
+
+        results = {
+            'training_loss': train_losses,
+            'training_accuracy': train_accuracies,
+            'validation_loss': test_losses,
+            'validation_accuracy': test_accuracies
+        }
+
         final_acc, final_loss, confusion_matrix = self.test(test_X, test_y, criterion, confusion_matrix=True)
-        return final_acc, final_loss, confusion_matrix
+        return final_acc, final_loss, confusion_matrix, results
 
 
     #Just tests the network 
