@@ -143,11 +143,10 @@ def main():
         model = nn_model.NNSentiment(learning_rate=0.0001, momentum=0.9, num_freq=200)
         final_loss, final_acc, confusion_matrix, results = model.train_and_test( x_train, y_train, x_test, y_test, 3)
         print("Final Accuracy: ", final_acc)
-        print("Final Loss: ", final_loss) 
+        print("Final Loss: ", final_loss)
         print("Confusion Matrix", confusion_matrix)
         print("Full results: ", results)
 
-        
     # Bayesian
     elif choice == '2':
 
@@ -310,7 +309,7 @@ def main():
     print()
 
     # Save results to JSON file
-    if json_results_file is not None:
+    if json_results_file is not None and choice != '4':
         with open(json_results_file, 'w') as file:
             json.dump(results, file)
 
