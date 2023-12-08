@@ -11,8 +11,6 @@ import bert_model
 import loading_module as ld
 import plotting_module as pl
 
-import dataset_cleanup
-
 
 # These are defaults, overridden by command line arguments
 IN_FILE_PATH = "./data/Appliances.json"
@@ -142,10 +140,8 @@ def main():
     # Run the selected model
     # MLP
     if choice == '1':
-        train_X, train_y = dataset_cleanup.even_selection(x_train, y_train)
-        test_X, test_y = dataset_cleanup.even_selection(x_test, y_test)
         model = nn_model.NNSentiment()
-        final_loss, final_acc, confusion_matrix = model.train_and_test( train_X, train_y, test_X, test_y, 50)
+        final_loss, final_acc, confusion_matrix = model.train_and_test( x_train, y_train, x_test, y_test, 1)
         print("Final Accuracy: ", final_acc)
         print("Final Loss: ", final_loss)
         print("Confusion Matrix", confusion_matrix)
